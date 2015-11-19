@@ -27,6 +27,14 @@ void *get_in_addr(struct sockaddr *sa)
     return &(((struct sockaddr_in6*)sa)->sin6_addr);
 }
 
+in_port_t get_in_port(struct sockaddr *sa)
+{
+    if (sa->sa_family == AF_INET) {
+        return (((struct sockaddr_in*)sa)->sin_port);
+    }
+    return (((struct sockaddr_in6*)sa)->sin6_port);
+}
+
 int main() /*int argc, char *argv[])*/
 {
     int sockfd = 0; 
@@ -47,14 +55,16 @@ int main() /*int argc, char *argv[])*/
    int j =0;
    int arr[4] = {0,0,0,0};
    char serv[100];
+   char *prser[4];
    int count = 0;
    int cost = 0;
+   char *ServIP;
 /*---------------------Reading the file------------------*/
    	f = fopen("serverA.txt", "r");
 	memset(buf,0,100);
 	while(fgets(buf, sizeof(buf), f) != NULL) /* when fgets reaches EOF, it retuens NULL */
         {
-                printf("The line is %s\n",buf);
+                //printf("The line is %s\n",buf);
                 memset(temp,0,100);
 		count = 0;
                 i = 0;
@@ -71,28 +81,32 @@ int main() /*int argc, char *argv[])*/
                             i++;
 			}
                         temp[j] = '\0';
-			printf("temp value is %s\n", temp);
+			//printf("temp value is %s\n", temp);
 			if(count == 0){
 			      strcpy(serv,temp);
-			      printf("serv value is %s\n", serv);
+			      //printf("serv value is %s\n", serv);
 			      count++;
 			}
 			else{
 			    if(strcmp(serv, "serverA")==0){
 				cost = atoi(temp); 
 				arr[0] = cost;
+				prser[0] = serv;
 			    }	
 			    if(strcmp(serv, "serverB")==0){
                                 cost = atoi(temp);
                                 arr[1] = cost;
+				prser[1] = serv;
                             }
 			    if(strcmp(serv, "serverC")==0){
                                 cost = atoi(temp);
                                 arr[2] = cost;
+				prser[2] = serv;
                             }
 			    if(strcmp(serv, "serverD")==0){
                                 cost = atoi(temp);
                                 arr[3] = cost;
+				prser[3] = serv;
                             }	
 		       }
 		i++;
@@ -100,7 +114,7 @@ int main() /*int argc, char *argv[])*/
 			break;
 		}
 	}
- 	printf("The array is %d,%d,%d,%d\n", arr[0],arr[1],arr[2],arr[3]);
+ 	//printf("The array is %d,%d,%d,%d\n", arr[0],arr[1],arr[2],arr[3]);
 	fclose(f);
 /*-------------------------------------------------------------------------------*/
 /*    if (argc != 2) {
@@ -118,31 +132,51 @@ int main() /*int argc, char *argv[])*/
     
     for(p = servinfo; p != NULL; p = p->ai_next) {
  	if ((sockfd = socket(p->ai_family, p->ai_socktype, p->ai_protocol)) == -1) {
- 	     perror(" Could not create ServerA - socket");
+ 	     perror(" server: socket");
  	     continue;
 	}
 
     	if (connect(sockfd, p->ai_addr, p->ai_addrlen) == -1) {
  	     close(sockfd);
- 	     perror("Error: ServerA: connect");
+ 	     perror("Error: connect");
  	     continue;
     	}
  	break;
     }
 
     if (p == NULL) {
- 	fprintf(stderr, "client: failed to connect\n");
+ 	fprintf(stderr, "failed to connect\n");
  	return 2;
     }
 
     inet_ntop(p->ai_family, get_in_addr((struct sockaddr *)p->ai_addr), s, sizeof s);
-    printf("client: connecting to %s\n", s);
+    //printf("client: connecting to %s\n", s);
+    printf("\nThe Server A is up and running.\n");
     freeaddrinfo(servinfo); // all done with this structure
+    printf("The Server A has the following neighbor information:\n\nNeighbor------Cost\n");
+
+    for(i=0;i<4;i++){
+	if(arr[i]!= 0)
+	    printf("%s       %d\n",prser[i],arr[i]);
+    }       
 
     if (send(sockfd, &arr, sizeof(arr), 0) == -1){
         perror("send");
  	exit(1);
     }
+    //ServIP = inet_ntoa((struct in_addr)p->ai_addr);
+
+	printf("\nThe Server A finishes sending its neighbor information to\n" 
+	"the Client with TCP port number %s and IP address %s\n",PORT,s); 
+	struct sockaddr_in sa;
+	int sa_len = sizeof(sa);
+	getsockname(sockfd,(struct sockaddr * __restrict__)&sa,&sa_len);
+	
+	printf("\nFor this connection with the Client, the Server A has\n" 
+	"TCP port number %d and IP address %s\n",((int)ntohs(sa.sin_port)),s);//(struct )(struct in_addr)sa->sin_addr);
+
+/*-----------after sending info print here---------*/
+
 
     close(sockfd);
 
@@ -181,7 +215,7 @@ int main() /*int argc, char *argv[])*/
 
 	freeaddrinfo(servinfo);
 
-	printf("listener: waiting to recvfrom...\n");
+	//printf("listener: waiting to recvfrom...\n");
 
 	addr_len = sizeof their_addr;
 	if ((recvfrom(sockfd2, &matrix, sizeof(matrix) , 0,
@@ -190,21 +224,59 @@ int main() /*int argc, char *argv[])*/
 		exit(1);
 	}
 
-	printf("listener: got packet from %s\n",
-		inet_ntop(their_addr.ss_family,
-			get_in_addr((struct sockaddr *)&their_addr),
-			s, sizeof s));
+	//printf("listener: got packet from %s\n",
+	inet_ntop(their_addr.ss_family,	get_in_addr((struct sockaddr *)&their_addr), s, sizeof s);
 /*	printf("listener: packet is %d bytes long\n", numbytes);
 	buf[numbytes] = '\0';
 	printf("listener: packet contains \"%s\"\n", buf);
 */
+	printf("\nThe server A has received the network topology from the\n"
+		"Client with UDP port number %d and IP address %s\n",(int)ntohs(get_in_port((struct sockaddr *)&their_addr)), s);
+
+	printf("\nEdge------Cost\n");
+	char row,col;
 	for(i=0;i<4;i++){
           for(j=0;j<4;j++){
-            printf("%d ",matrix[i][j]);
+	     if(j >= i){
+                 if(matrix[i][j] != 0){
+		     switch(i){
+			case 0: row = 'A';
+			    break;
+                        case 1: row = 'B';
+                            break;
+                        case 2: row = 'C';
+                            break;
+                        case 3: row = 'D';
+                            break;	
+			default: printf("error\n");
+				 break;		
+		     }
+                     switch(j){
+                        case 0: col = 'A';
+                            break;
+                        case 1: col = 'B';
+                            break;
+                        case 2: col = 'C';
+                            break;
+                        case 3: col = 'D';
+                            break;
+                        default: printf("error\n");                    
+                                 break;
+                     }	    
+		     printf("%c%c         %d\n",row,col,matrix[i][j]);
+		 }
+ 	     }		
           }
-          printf("\n");
         }
-
+	
+	
+	/*
+ 	struct sockaddr_in sa2;
+        int sa2_len = sizeof(sa2);
+        getsockname(sockfd2,(struct sockaddr * __restrict__)&sa2,&sa2_len);
+	*/
+	printf("\nFor this connection with Client, The Server A has\n"
+	"UDP port number %s and IP address %s\n\n",MYPORT,s);//((int)ntohs(sa2.sin_port)),s);
 	close(sockfd2);
 
     return 0;

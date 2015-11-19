@@ -47,6 +47,7 @@ int main() /*int argc, char *argv[])*/
    int j =0;
    int arr[4] = {0,0,0,0};
    char serv[100];
+   char *prser[4];
    int count = 0;
    int cost = 0;
 /*---------------------Reading the file------------------*/
@@ -54,7 +55,7 @@ int main() /*int argc, char *argv[])*/
 	memset(buf,0,100);
 	while(fgets(buf, sizeof(buf), f) != NULL) /* when fgets reaches EOF, it retuens NULL */
         {
-                printf("The line is %s\n",buf);
+                //printf("The line is %s\n",buf);
                 memset(temp,0,100);
 		count = 0;
                 i = 0;
@@ -71,28 +72,32 @@ int main() /*int argc, char *argv[])*/
                             i++;
 			}
                         temp[j] = '\0';
-			printf("temp value is %s\n", temp);
+			//printf("temp value is %s\n", temp);
 			if(count == 0){
 			      strcpy(serv,temp);
-			      printf("serv value is %s\n", serv);
+			      //printf("serv value is %s\n", serv);
 			      count++;
 			}
 			else{
 			    if(strcmp(serv, "serverA")==0){
 				cost = atoi(temp); 
 				arr[0] = cost;
+				prser[0] = serv;
 			    }	
 			    if(strcmp(serv, "serverB")==0){
                                 cost = atoi(temp);
                                 arr[1] = cost;
+				prser[1] = serv;
                             }
 			    if(strcmp(serv, "serverC")==0){
                                 cost = atoi(temp);
                                 arr[2] = cost;
+				prser[2] = serv;
                             }
 			    if(strcmp(serv, "serverD")==0){
                                 cost = atoi(temp);
                                 arr[3] = cost;
+				prser[3] = serv;
                             }	
 		       }
 		i++;
@@ -100,7 +105,7 @@ int main() /*int argc, char *argv[])*/
 			break;
 		}
 	}
- 	printf("The array is %d,%d,%d,%d\n", arr[0],arr[1],arr[2],arr[3]);
+ 	//printf("The array is %d,%d,%d,%d\n", arr[0],arr[1],arr[2],arr[3]);
 	fclose(f);
 /*-------------------------------------------------------------------------------*/
 /*    if (argc != 2) {
@@ -136,13 +141,24 @@ int main() /*int argc, char *argv[])*/
     }
 
     inet_ntop(p->ai_family, get_in_addr((struct sockaddr *)p->ai_addr), s, sizeof s);
-    printf("client: connecting to %s\n", s);
+    //printf("client: connecting to %s\n", s);
+    printf("The Server A is up and running.\n");
     freeaddrinfo(servinfo); // all done with this structure
+
+    printf("The Server A has the following neighbor information:\n\nNeighbor------Cost\n");
+
+    for(i=0;i<4;i++){
+	if(arr[i]!= 0)
+	    printf("%s       %d\n",prser[i],arr[i]);
+    }       
 
     if (send(sockfd, &arr, sizeof(arr), 0) == -1){
         perror("send");
  	exit(1);
     }
+
+/*-----------after sending info print here---------*/
+
 
     close(sockfd);
 
