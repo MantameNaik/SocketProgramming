@@ -57,10 +57,38 @@ int minKey(int key[], int  mstSet[])
 int printMST(int parent[], int n, int graph[V][V])
 {
    int i = 1;
-   printf("Edge   Weight\n");
-   for (i = 1; i < V; i++)
-      printf("%d - %d    %d \n", parent[i], i, graph[i][parent[i]]);
+   int cost = 0;
+   char serv1, serv2;
+   for (i = 1; i < V; i++){
+	cost = cost + graph[i][parent[i]];
+   }
+   printf("\nThe Client has calculated a tree. The tree cost is %d\n",cost);
+   printf("Edge------Cost\n");
+   for (i = 1; i < V; i++){
+      switch(i){
+   	case 0: serv1 = 'A';
+		break;
+        case 1: serv1 = 'B';
+                break;
+        case 2: serv1 = 'C';
+                break;
+        case 3: serv1 = 'D';
+                break;
+      }
+	switch(parent[i]){
+        case 0: serv2 = 'A';
+                break;
+        case 1: serv2 = 'B';
+                break;
+        case 2: serv2 = 'C';
+                break;
+        case 3: serv2 = 'D';
+                break;
+      }
+      printf("%c%c       %d \n", serv2, serv1, graph[i][parent[i]]);
+   }
 }
+
 // Function to construct and print MST for a graph represented using adjacency
 // matrix representation
 void primMST(int graph[V][V])

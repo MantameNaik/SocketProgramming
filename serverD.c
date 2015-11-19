@@ -16,7 +16,7 @@
 /* TCP Client for sending its data*/
 #define PORT "25596" // the port client will be connecting to
 #define MAXDATASIZE 100 // max number of bytes we can get at once
-#define MYPORT "21596"	// the port users will be connecting to -- UDP
+#define MYPORT "24596"	// the port users will be connecting to -- UDP
 // get sockaddr, IPv4 or IPv6
 
 void *get_in_addr(struct sockaddr *sa)
