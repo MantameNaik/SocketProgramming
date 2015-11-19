@@ -16,7 +16,7 @@
 /* TCP Client for sending its data*/
 #define PORT "25596" // the port client will be connecting to
 #define MAXDATASIZE 100 // max number of bytes we can get at once
-#define MYPORT "23596"   // the port users will be connecting to -- UDP
+#define MYPORT "22596"   // the port users will be connecting to -- UDP
 // get sockaddr, IPv4 or IPv6:
 
 void *get_in_addr(struct sockaddr *sa)
@@ -27,85 +27,23 @@ void *get_in_addr(struct sockaddr *sa)
     return &(((struct sockaddr_in6*)sa)->sin6_addr);
 }
 
-int main()//int argc, char *argv[])
+int main() //int argc, char *argv[])
 {
     int sockfd = 0; 
     int sockfd2 = 0;
-    //char buf[MAXDATASIZE] = {0};
+    char buf[MAXDATASIZE] = {0};
     struct addrinfo hints, *servinfo, *p;
     int rv = 0;
     struct sockaddr_storage their_addr;
     socklen_t addr_len;
     char s[INET6_ADDRSTRLEN] = {0};
-    //FILE *fd = NULL; 
-    //int arr[4] = {20,15,0,0}; 
+    FILE *fd = NULL; 
+    int arr[4] = {10,0,15,10};    
     int matrix[4][4];
-    //int i,j;
+    int i,j;
     /*int nbLinkcost[3][2] = { {1,20}, {2,10} };*/ 
-   FILE *f = NULL;
-   char buf[100];
-   char temp[100];
-   int i =0;
-   int j =0;
-   int arr[4] = {0,0,0,0};
-   char serv[100];
-   int count = 0;
-   int cost = 0;
-/*---------------------Reading the file------------------*/
-   	f = fopen("serverC.txt", "r");
-	memset(buf,0,100);
-	while(fgets(buf, sizeof(buf), f) != NULL) /* when fgets reaches EOF, it retuens NULL */
-        {
-                printf("The line is %s\n",buf);
-                memset(temp,0,100);
-		count = 0;
-                i = 0;
-                while(buf[i] != '\n'){  // Reading each line
-                        j=0;
-                        while(buf[i]!=' ') // reading each string
-                        {
-			    if(buf[i] == '\0')
-                                break;
-			    if(buf[i] == '\n')
-				break;
-                            temp[j]=buf[i];
-                            j++;
-                            i++;
-			}
-                        temp[j] = '\0';
-			printf("temp value is %s\n", temp);
-			if(count == 0){
-			      strcpy(serv,temp);
-			      printf("serv value is %s\n", serv);
-			      count++;
-			}
-			else{
-			    if(strcmp(serv, "serverA")==0){
-				cost = atoi(temp); 
-				arr[0] = cost;
-			    }	
-			    if(strcmp(serv, "serverB")==0){
-                                cost = atoi(temp);
-                                arr[1] = cost;
-                            }
-			    if(strcmp(serv, "serverC")==0){
-                                cost = atoi(temp);
-                                arr[2] = cost;
-                            }
-			    if(strcmp(serv, "serverD")==0){
-                                cost = atoi(temp);
-                                arr[3] = cost;
-                            }	
-		       }
-		i++;
-		if(buf[i] == '\0' || buf[i] == '\n')
-			break;
-		}
-	}
- 	printf("The array is %d,%d,%d,%d\n", arr[0],arr[1],arr[2],arr[3]);
-	fclose(f);
-/*-------------------------------------------------------------------------------*/
-/*    if (argc != 2) {
+	
+   /* if (argc != 2) {
  	fprintf(stderr,"usage: client hostname\n");
  	exit(1);
     }*/
@@ -158,6 +96,7 @@ int main()//int argc, char *argv[])
 
     close(sockfd);
 
+/*-------------------- UDP------------*/
 /*-------------------- UDP recieve------------*/
         memset(&hints, 0, sizeof hints);
         hints.ai_family = AF_UNSPEC; // set to AF_INET to force IPv4
@@ -218,7 +157,5 @@ int main()//int argc, char *argv[])
         }
 
         close(sockfd2);
-
-
     return 0;
 }
