@@ -12,12 +12,12 @@
 #include <signal.h>
 #include <limits.h>
 
-#define PORT "25596" // the port users will be connecting to
+#define PORT "25596" // TCP port for Client
 #define BACKLOG 10 // how many pending connections queue will hold
 #define MAXDATASIZE 100 // max number of bytes we can get at once
 
 
-// get sockaddr, IPv4 or IPv6:
+// get sockaddr, IPv4 or IPv6 (Beej's code)
 void *get_in_addr(struct sockaddr *sa)
 {
     if (sa->sa_family == AF_INET) {
@@ -25,7 +25,7 @@ void *get_in_addr(struct sockaddr *sa)
     }
     return &(((struct sockaddr_in6*)sa)->sin6_addr);
 }
-
+//to obtain the dynamic ports (Linux man pages)
 in_port_t get_in_port(struct sockaddr *sa)
 {
     if (sa->sa_family == AF_INET) {
@@ -41,6 +41,7 @@ in_port_t get_in_port(struct sockaddr *sa)
 #define true 1
 // A utility function to find the vertex with minimum key value, from
 // the set of vertices not yet included in MST
+//Prim's Code used
 int minKey(int key[], int  mstSet[])
 {
    // Initialize min value
@@ -54,6 +55,7 @@ int minKey(int key[], int  mstSet[])
 }
  
 // A utility function to print the constructed MST stored in parent[]
+//Prim's code modified
 int printMST(int parent[], int n, int graph[V][V])
 {
    int i = 1;
@@ -85,12 +87,13 @@ int printMST(int parent[], int n, int graph[V][V])
         case 3: serv2 = 'D';
                 break;
       }
-      printf("%c%c       %d \n", serv2, serv1, graph[i][parent[i]]);
+      printf("%c%c       %d \n", serv2, serv1, graph[i][parent[i]]); // Printing the MST links here
    }
 }
 
 // Function to construct and print MST for a graph represented using adjacency
 // matrix representation
+//Prim's code
 void primMST(int graph[V][V])
 {
      int parent[V]; // Array to store constructed MST
@@ -156,19 +159,20 @@ int main()
     struct sockaddr_in sa2;
     int sa2_len = sizeof(sa2);
 
-    memset(&hints, 0, sizeof hints);
+    memset(&hints, 0, sizeof hints); // To obtain family and socktype for socket creation
     hints.ai_family = AF_UNSPEC;
     hints.ai_socktype = SOCK_STREAM;
     hints.ai_flags = AI_PASSIVE; // use my IP
 
-    if ((rv = getaddrinfo(NULL, PORT, &hints, &servinfo)) != 0) {
+    if ((rv = getaddrinfo(NULL, PORT, &hints, &servinfo)) != 0) { // obtaining the address info
  	fprintf(stderr, "getaddrinfo: %s\n", gai_strerror(rv));
     return 1;
     }
-
+	char *ip = "127.0.0.1";
+// Beej's code is used in between
  // loop through all the results and bind to the first we can
     for(p = servinfo; p != NULL; p = p->ai_next) {
- 	if ((sockfd = socket(p->ai_family, p->ai_socktype, p->ai_protocol)) == -1) {
+ 	if ((sockfd = socket(p->ai_family, p->ai_socktype, p->ai_protocol)) == -1) {// Creation of socket
 	    perror("server: socket");
             continue;
  	}
@@ -178,7 +182,7 @@ int main()
  	    exit(1);
  	}
 
-	if (bind(sockfd, p->ai_addr, p->ai_addrlen) == -1) {
+	if (bind(sockfd, p->ai_addr, p->ai_addrlen) == -1) { // bind the socket
  	    close(sockfd);
  	    perror("server: bind");
  	    continue;
@@ -187,7 +191,7 @@ int main()
  	break;
     }
 
-    freeaddrinfo(servinfo); // all done with this structure
+    freeaddrinfo(servinfo); // freeing the structure
 
     if (p == NULL) {
  	fprintf(stderr, "server: failed to bind\n");
@@ -199,7 +203,6 @@ int main()
  	exit(1);
     }
 
-    //sa.sa_handler = sigchld_handler; // reap all dead processes
     sigemptyset(&sa.sa_mask);
     sa.sa_flags = SA_RESTART;
  
@@ -207,43 +210,29 @@ int main()
  	perror("sigaction");
  	exit(1);
     }
-      printf("\nThe Client has TCP port number %s and IP address %s\n", PORT,"127.0.0.1");//p->ai_addr);//get_in_addr((struct sockaddr *)&their_addr))
-//    printf("server: waiting for connections...\n");
-//use for loop for 4 servers
-  //  while(1) { // main accept() loop
-    for(i=0;i<4;i++){ // This loop reads from each server.
+      printf("\nThe Client has TCP port number %s and IP address %s\n", PORT,ip);
+  
+   for(i=0;i<4;i++){ // This loop reads from each server.
 	sin_size = sizeof their_addr;
- 	new_fd = accept(sockfd, (struct sockaddr *)&their_addr, &sin_size);
+ 	new_fd = accept(sockfd, (struct sockaddr *)&their_addr, &sin_size); // New socket 
  	if (new_fd == -1) {
  	    perror("accept");
  	    continue;
  	}
 	
        inet_ntop(their_addr.ss_family, get_in_addr((struct sockaddr *)&their_addr), s, sizeof s);
-  //  printf("server: got connection from %s\n", s);
-/*
-    if (!fork()) { // this is the child process
- 	close(sockfd); // child doesn't need the listener
- 	if (send(new_fd, "Hello, world!", 13, 0) == -1)
- 	    perror("send");
-        close(new_fd);
-        exit(0);
-    }
-*/
-	// arr is 4x4
-	// temp_arr is 1x4
-       if ((recv(new_fd, temp_arr, sizeof(temp_arr), 0)) == -1) {
+ 
+      if ((recv(new_fd, temp_arr, sizeof(temp_arr), 0)) == -1){ // Recieving the data from each server
         perror("recv");
         exit(1);
        }
-    
+        // Filling up the topology  matrix
 	matrix[i][0] = temp_arr[0];
 	matrix[i][1] = temp_arr[1];
   	matrix[i][2] = temp_arr[2];
 	matrix[i][3] = temp_arr[3];
 
-    //printf("client: received %d, %d, %d, %d\n",temp_arr[0],temp_arr[1],temp_arr[2],temp_arr[3]);
-        close(new_fd); // parent doesn't need this
+        close(new_fd); // Close new socket
         switch(i){
 		case 0: strcpy(ngbr,"ServerA");
 			break;
@@ -258,7 +247,8 @@ int main()
     	}
     	printf("\nThe Client receivers neighbor information from the %s\n"
 	   "TCP port number %d and IP address %s\n",ngbr,(int)ntohs(get_in_port((struct sockaddr *)&their_addr)),s);
-	printf("The %s has the following neighbor information:\nNeighbor------Cost\n",ngbr);
+	printf("\nThe %s has the following neighbor information:\nNeighbor------Cost\n",ngbr);
+
 	for(j=0;j<4;j++){
             if(temp_arr[j]!= 0){
 		switch(j){
@@ -277,37 +267,27 @@ int main()
 	    }
         }
 	
-	printf("For this connection with %s,The Client has \nTCP port number %s and IP address %s\n",ngbr,PORT,s); 
+	printf("\nFor this connection with %s,The Client has \nTCP port number %s and IP address %s\n",ngbr,PORT,s); 
 
 
     }// end of for loop for each server
-/* MATRIX here
-	i = 0; j= 0;
-    for(i=0;i<4;i++){
-        for(j=0;j<4;j++){
-            printf("%d ",matrix[i][j]);
-        }
-        printf("\n");
-    }*/
-    close(sockfd);
+    close(sockfd); // Close TCP socket
 
 /*-----------------------------------UDP-------------------------------*/
-	i = j = 0;	
-    for(i=0;i<4;i++){
+     i = j = 0;	
+     for(i=0;i<4;i++){
         sleep(1);
 	memset(&hints, 0, sizeof hints);
 	hints.ai_family = AF_UNSPEC;
 	hints.ai_socktype = SOCK_DGRAM;
 
-	UDPport = 21596 + i*(1000);
+	UDPport = 21596 + i*(1000); // for each server's UDP port
 	sprintf(MYPORT,"%d",UDPport);
-        //printf("The UDP port is %s\n",MYPORT);
 	if ((rv = getaddrinfo("localhost", MYPORT, &hints, &servinfo)) != 0) {
 		fprintf(stderr, "getaddrinfo: %s\n", gai_strerror(rv));
 		return 1;
 	}
 
-	// loop through all the results and make a socket
 	for(p = servinfo; p != NULL; p = p->ai_next) {
 		if ((sockfd = socket(p->ai_family, p->ai_socktype,
 				p->ai_protocol)) == -1) {
@@ -322,7 +302,7 @@ int main()
 		fprintf(stderr, "talker: failed to create socket\n");
 		return 2;
 	}
-	   if ((numbytes = sendto(sockfd, &matrix, sizeof(matrix), 0, p->ai_addr, p->ai_addrlen)) == -1) {
+	   if ((numbytes = sendto(sockfd, &matrix, sizeof(matrix), 0, p->ai_addr, p->ai_addrlen)) == -1) {//sending the matrix
 		perror("talker: sendto");
 		exit(1);
 	   }
@@ -336,11 +316,11 @@ int main()
                         break;
                 case 3: strcpy(ngbr,"ServerD");
                         break;
-                default: printf("error\n");//strcpy(ngbr,"ServerA");
+                default: printf("error\n");
                         break;
         }
 
-	printf("The Client has sent the network topology to the %s\n"
+	printf("\nThe Client has sent the network topology to the %s\n"
 	"with UDP port number %s and IP address %s as follows:\nEdge------Cost\n",ngbr,MYPORT,s);
 	freeaddrinfo(servinfo);
 
@@ -372,22 +352,19 @@ int main()
                         default: printf("error\n");
                                  break;
                      }
-                     printf("%c%c         %d\n",row,col,matrix[k][j]);
+                     printf("%c%c         %d\n",row,col,matrix[k][j]); // Printing the correct links 
                  }
              }
           }
         }
-/*
- 	struct sockaddr_in sa2;
-        int sa2_len = sizeof(sa2);*/
         getsockname(sockfd,(struct sockaddr * __restrict__)&sa2,&sa2_len);
 
-	printf("For this connection with %s, The Client has\n" 
+	printf("\nFor this connection with %s, The Client has\n" 
 	"UDP port number %d and IP address %s\n",ngbr,((int)ntohs(sa2.sin_port)),s);
 	//printf("talker: sent %d bytes to %s\n", numbytes, "localhost");
-	close(sockfd);
+	close(sockfd); // Close UDP socket
     }
 /*-------------------------------*/
-    primMST(matrix);//[4][4]);	
+    primMST(matrix);// MST function is being called
     return 0;
 }
